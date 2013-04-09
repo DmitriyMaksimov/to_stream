@@ -38,6 +38,16 @@ namespace Utils
     namespace details
     {
         template<typename T>
+        class IsNotBoostOptional
+        {
+            static const T& GetT();
+            template<typename U> static boost::type_traits::yes_type Impl(const boost::optional<U>&);
+            static boost::type_traits::no_type Impl(...);
+        public:
+            BOOST_STATIC_CONSTANT(bool, value = ( sizeof(Impl(GetT())) == sizeof(boost::type_traits::no_type) ) );
+        };
+
+        template<typename T>
         class HasToStringMethod
         {
             template<typename U, std::string (U::*)() const> struct SFINAE {};
@@ -97,7 +107,11 @@ namespace Utils
         template <typename CharT, typename Traits, typename T>
         struct UseOutputOperator
         {
-            BOOST_STATIC_CONSTANT(bool, value = ( IsOutStreamable<CharT, Traits, T>::value ) );
+            BOOST_STATIC_CONSTANT(bool, value = ( boost::type_traits::ice_and<
+                IsOutStreamable<CharT, Traits, T>::value,
+                IsNotBoostOptional<T>::value
+            >::value )
+            );
         };
 
         template <typename CharT, typename Traits, typename T>
@@ -140,6 +154,20 @@ namespace Utils
         to_stream(std::basic_ostream<CharT, Traits>& strm, const T& val)
         {
             return ( strm << val.to_string() );
+        }
+
+        // === boost::optional
+        template <typename CharT, typename Traits, typename T>
+        std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const boost::optional<T>& val)
+        {
+            if ( val )
+            {
+                return to_stream(strm, val.get());
+            }
+            else
+            {
+                return ( strm << "--" );
+            }
         }
 
         // === bool
@@ -248,19 +276,6 @@ namespace Utils
         std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const std::stack<T>& val)
         {
             return OutputStackOrPriorityQueue(strm, val);
-        }
-
-        template <typename CharT, typename Traits, typename T>
-        std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const boost::optional<T>& val)
-        {
-            if ( val )
-            {
-                return to_stream(strm, val.get());
-            }
-            else
-            {
-                return ( strm << "--" );
-            }
         }
 
         template <typename CharT, typename Traits, typename T, size_t N>
