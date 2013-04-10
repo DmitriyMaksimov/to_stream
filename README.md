@@ -96,7 +96,7 @@ std::cout << LOG_VAR(aVar);
 
 Output:
 ```
-aVar<[3]((1, one), (2, two), (3, three))>
+aVar<[3]((1, one), (2, two), (3, --))>
 ```
 
 ## Dependencies
