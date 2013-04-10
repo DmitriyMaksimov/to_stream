@@ -35,18 +35,14 @@
 
 namespace Utils
 {
+    namespace Manip
+    {
+        template <typename CharT, typename Traits, typename T>
+        std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits> &strm, const T& var);
+    }	// namespace Manip
+
     namespace details
     {
-        template<typename T>
-        class IsNotBoostOptional
-        {
-            static const T& GetT();
-            template<typename U> static boost::type_traits::yes_type Impl(const boost::optional<U>&);
-            static boost::type_traits::no_type Impl(...);
-        public:
-            BOOST_STATIC_CONSTANT(bool, value = ( sizeof(Impl(GetT())) == sizeof(boost::type_traits::no_type) ) );
-        };
-
         template<typename T>
         class HasToStringMethod
         {
@@ -107,11 +103,7 @@ namespace Utils
         template <typename CharT, typename Traits, typename T>
         struct UseOutputOperator
         {
-            BOOST_STATIC_CONSTANT(bool, value = ( boost::type_traits::ice_and<
-                IsOutStreamable<CharT, Traits, T>::value,
-                IsNotBoostOptional<T>::value
-            >::value )
-            );
+            BOOST_STATIC_CONSTANT(bool, value = ( IsOutStreamable<CharT, Traits, T>::value ) );
         };
 
         template <typename CharT, typename Traits, typename T>
@@ -156,20 +148,6 @@ namespace Utils
             return ( strm << val.to_string() );
         }
 
-        // === boost::optional
-        template <typename CharT, typename Traits, typename T>
-        std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const boost::optional<T>& val)
-        {
-            if ( val )
-            {
-                return to_stream(strm, val.get());
-            }
-            else
-            {
-                return ( strm << "--" );
-            }
-        }
-
         // === bool
         template <typename CharT, typename Traits>
         std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const bool& val)
@@ -188,9 +166,9 @@ namespace Utils
         std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const std::pair<T, U>& val)
         {
             strm << '(';
-            to_stream(strm, val.first);
+            ::Utils::Manip::to_stream(strm, val.first);
             strm << ", ";
-            to_stream(strm, val.second);
+            ::Utils::Manip::to_stream(strm, val.second);
             strm << ')';
 
             return strm;
@@ -205,11 +183,11 @@ namespace Utils
             if ( !val.empty() )
             {
                 typename T::const_iterator it = val.begin();
-                to_stream(strm, *it++);
+                ::Utils::Manip::to_stream(strm, *it++);
                 for (; it != val.end(); ++it)
                 {
                     strm << ", ";
-                    to_stream(strm, *it);
+                    ::Utils::Manip::to_stream(strm, *it);
                 }
             }
 
@@ -226,13 +204,13 @@ namespace Utils
 
             if ( !val.empty() )
             {
-                to_stream(strm, tmp.front());
+                ::Utils::Manip::to_stream(strm, tmp.front());
                 tmp.pop();
 
                 while ( !tmp.empty() )
                 {
                     strm << ", ";
-                    to_stream(strm, tmp.front());
+                    ::Utils::Manip::to_stream(strm, tmp.front());
                     tmp.pop();
                 }
             }
@@ -250,13 +228,13 @@ namespace Utils
 
             if ( !val.empty() )
             {
-                to_stream(strm, tmp.top());
+                ::Utils::Manip::to_stream(strm, tmp.top());
                 tmp.pop();
 
                 while ( !tmp.empty() )
                 {
                     strm << ", ";
-                    to_stream(strm, tmp.top());
+                    ::Utils::Manip::to_stream(strm, tmp.top());
                     tmp.pop();
                 }
             }
@@ -278,16 +256,29 @@ namespace Utils
             return OutputStackOrPriorityQueue(strm, val);
         }
 
+        template <typename CharT, typename Traits, typename T>
+        std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const boost::optional<T>& val)
+        {
+            if ( val )
+            {
+                return ::Utils::Manip::to_stream(strm, val.get());
+            }
+            else
+            {
+                return ( strm << "--" );
+            }
+        }
+
         template <typename CharT, typename Traits, typename T, size_t N>
         std::basic_ostream<CharT, Traits>& to_stream(std::basic_ostream<CharT, Traits>& strm, const T (&val)[N])
         {
             strm << '[' << N << "](";
 
-            to_stream(strm, val[0]);
+            ::Utils::Manip::to_stream(strm, val[0]);
             for (size_t i = 1; i < N; ++i)
             {
                 strm << ", ";
-                to_stream(strm, val[i]);
+                ::Utils::Manip::to_stream(strm, val[i]);
             }
 
             strm << ')';
