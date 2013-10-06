@@ -85,8 +85,8 @@ namespace Utils
             BOOST_STATIC_CONSTANT(bool, value = ( sizeof(Impl(GetStrm() << GetT())) == sizeof(boost::type_traits::yes_type) ) );
         };
 
-        BOOST_MPL_HAS_XXX_TRAIT_DEF(const_iterator);
-        BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type);
+        BOOST_MPL_HAS_XXX_TRAIT_DEF(const_iterator)
+        BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type)
 
         template<typename T>
         struct IsContainer
